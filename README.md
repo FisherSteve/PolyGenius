@@ -29,7 +29,6 @@ Mit der Option, **ganzzahlige Koeffizienten zu erzwingen** und dem **"Ich fühle
 
 ---
 
-## 🚀 Erste Schritte
 
 ### Voraussetzungen
 
@@ -39,7 +38,4 @@ Mit der Option, **ganzzahlige Koeffizienten zu erzwingen** und dem **"Ich fühle
     * `numpy`
     * `matplotlib`
 
-Installieren Sie die benötigten Bibliotheken mit pip:
 
-```bash
-pip install numpy matplotlib
