@@ -9,7 +9,7 @@
 
 **PolyGenius** ist eine interaktive Desktop-Anwendung, die mit Python und Tkinter entwickelt wurde, um die Generierung, Analyse und Visualisierung von Polynomfunktionen (kubisch, quadratisch, linear) zu vereinfachen. Egal, ob Sie bestimmte Eigenschaften wie Nullstellen, Extrema, Wendepunkte oder Skalierungsfaktoren vorgeben möchten – PolyGenius berechnet das entsprechende Polynom, zeigt seine Ableitungen und kritischen Punkte an und visualisiert es in einem interaktiven Graphen.
 
-Mit der Option, **ganzzahlige Koeffizienten zu erzwingen** und dem **"Ich fühle mich glücklich!"-Modus** für zufällige Polynome, ist PolyGenius ein ideales Werkzeug für Schüler, Studenten und alle, die ein tieferes Verständnis von Polynomfunktionen entwickeln möchten.
+Mit der Option, **ganzzahlige Koeffizienten zu erzwingen** und dem **"Ich fühle mich glücklich!"-Modus** für zufällige Polynome, ist PolyGenius ein ideales Werkzeug für Schüler, Studenten und alle, die ein tieferes Verständnis von Polynomfunktionen entwickeln möchten oder Lehrer, welche Aufgaben erstellen wollen.
 
 ---
 
