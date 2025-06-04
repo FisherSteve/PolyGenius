@@ -53,11 +53,8 @@ Mit Optionen wie dem **Erzwingen ganzzahliger Koeffizienten**, dem **"Ich fühle
 
 * Python 3.x
 * Die folgenden Python-Bibliotheken:
-    * `tkinter` (standardmäßig in Python enthalten)
     * `numpy`
     * `matplotlib`
-    * `argparse` (standardmäßig in Python enthalten)
-    * `re` (standardmäßig in Python enthalten)
 
 ---
 
@@ -109,7 +106,7 @@ Möchtest du **PolyGenius** an Freunde oder Kollegen weitergeben, die keine Pyth
 3.  **Die .exe-Datei erstellen:**
     Führe den folgenden Befehl in der Kommandozeile aus. Er teilt PyInstaller mit, dass eine einzelne, fensterbasierte (`--windowed`) `.exe`-Datei erstellt werden soll:
     ```bash
-    pyinstaller --onefile --windowed dein_programm_name.py
+    pyinstaller --onefile --windowed PolyGeniusBeta.py
     ```
     * `--onefile`: Packt die gesamte Anwendung in **eine einzige `.exe`-Datei**.
     * `--windowed` (oder `--noconsole`): Verhindert, dass beim Start der `.exe` ein zusätzliches Konsolenfenster geöffnet wird.
@@ -122,5 +119,5 @@ Möchtest du **PolyGenius** an Freunde oder Kollegen weitergeben, die keine Pyth
 
 ## Lizenz
 
-Dieses Projekt ist unter der MIT-Lizenz lizenziert - siehe die [LICENSE.md](LICENSE.md)-Datei für Details (falls vorhanden).
+Dieses Projekt ist unter der MIT-Lizenz lizenziert.
 
