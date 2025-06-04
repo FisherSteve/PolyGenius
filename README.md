@@ -7,28 +7,45 @@
 
 ## 💡 Projektübersicht
 
-**PolyGenius** ist eine interaktive Desktop-Anwendung, die mit Python und Tkinter entwickelt wurde, um die Generierung, Analyse und Visualisierung von Polynomfunktionen (kubisch, quadratisch, linear) zu vereinfachen. Egal, ob Sie bestimmte Eigenschaften wie Nullstellen, Extrema, Wendepunkte oder Skalierungsfaktoren vorgeben möchten – PolyGenius berechnet das entsprechende Polynom, zeigt seine Ableitungen und kritischen Punkte an und visualisiert es in einem interaktiven Graphen.
+**PolyGenius** ist eine interaktive Desktop-Anwendung, die mit Python und Tkinter entwickelt wurde, um die Generierung, Analyse und Visualisierung von Polynomfunktionen (bis zum 4. Grad, einschließlich biquadratischer, kubischer, quadratischer und linearer Funktionen) zu vereinfachen. Egal, ob Sie bestimmte Eigenschaften wie Nullstellen, Extrema, Wendepunkte, Skalierungsfaktoren oder direkt die Koeffizienten vorgeben möchten – PolyGenius berechnet das entsprechende Polynom, zeigt seine Ableitungen und kritischen Punkte an und visualisiert es in einem interaktiven Graphen.
 
-Mit der Option, **ganzzahlige Koeffizienten zu erzwingen** und dem **"Ich fühle mich glücklich!"-Modus** für zufällige Polynome, ist PolyGenius ein ideales Werkzeug für Schüler, Studenten und alle, die ein tieferes Verständnis von Polynomfunktionen entwickeln möchten oder Lehrer, welche Aufgaben erstellen wollen.
+**Neu:** Geben Sie Polynome direkt als Text ein (z.B. "x^3 - 2x + 4")! PolyGenius erkennt den Typ und die Koeffizienten automatisch.
+
+Mit der Option, **ganzzahlige Koeffizienten zu erzwingen**, dem **"Ich fühle mich glücklich!"-Modus** für zufällige Polynome und der Möglichkeit, eine **detaillierte Kurvendiskussion** (inklusive Symmetrie, Monotonie und Krümmung) zu exportieren, ist PolyGenius ein ideales Werkzeug für Schüler, Studenten, Lehrer und alle, die ein tieferes Verständnis von Polynomfunktionen entwickeln oder Aufgaben erstellen möchten.
 
 ---
 
 ## ✨ Features
 
-* **Vielseitige Polynomtypen:** Erstellen Sie kubische, quadratische und lineare Funktionen.
+* **Vielseitige Polynomtypen:** Erstellen Sie Funktionen bis zum 4. Grad:
+    * **Biquadratische Polynome** ($Ax^4 + Bx^2 + D$)
+    * **Kubische Polynome** ($ax^3 + bx^2 + cx + d$)
+    * **Quadratische Polynome** ($bx^2 + cx + d$)
+    * **Lineare Polynome** ($cx + d$)
 * **Flexible Konstruktionsmethoden:**
+    * **Direkte Eingabe:** Geben Sie die Polynomfunktion als String ein (z.B. "2x^3 - x^2 + 5x - 1") oder definieren Sie sie über ihre Koeffizienten.
     * **Kubische Polynome:** Definieren Sie über Sattelpunkte, Extrema-Lagen (x/y-Werte), Wendepunkt & Abstand zu Extrema, oder Nullstellen.
+    * **Biquadratische Polynome:** Konstruktion aus äußeren und zentralen Extrema, Wendepunkten und zentralem Extremum, oder direkte Koeffizienteneingabe ($A, B, D$).
     * **Quadratische Polynome:** Konstruktion aus Scheitelpunkt und Skalierungsfaktor oder direkte Koeffizienteneingabe.
     * **Lineare Polynome:** Aus Nullstelle und y-Achsenabschnitt oder direkte Koeffizienteneingabe.
+    * **X-Verschiebung:** Optionale Verschiebung des Basispolynoms entlang der x-Achse für kubische und biquadratische Funktionen.
 * **Präzise Berechnungen:** Verwendet `fractions` für exakte Koeffizienten und `numpy` für robuste Nullstellensuche.
-* **Detaillierte Analyse:** Zeigt das Polynom P(x), seine erste P'(x) und zweite P''(x) Ableitung, Nullstellen, kritische Stellen (Extrema), Wendestellen und Sattelpunktinformationen an.
-* **Interaktiver Graph:** Visualisiert das generierte Polynom zusammen mit seinen Nullstellen, Extrema und Wendepunkten.
-* **"Ich fühle mich glücklich!"-Modus:** Generiert zufällige Polynome und deren Analyse auf Knopfdruck.
-* **Anpassbare Koeffizienten:** Option zum Erzwingen ganzzahliger Koeffizienten für bestimmte Konstruktionsmethoden.
-* **Benutzerfreundliche GUI:** Intuitive Oberfläche, die auch für Nicht-Programmierer leicht zu bedienen ist.
+* **Detaillierte Analyse & Export:**
+    * Zeigt das (ggf. verschobene) Polynom $P(x)$, seine erste $P'(x)$, zweite $P''(x)$ und dritte $P'''(x)$ Ableitung an.
+    * Berechnet Nullstellen, kritische Stellen (Extrema) mit Klassifizierung (Hoch-, Tief-, Sattelpunkt), und Wendestellen.
+    * **NEU:** Exportieren Sie eine vollständige Kurvendiskussion als Text, inklusive Symmetrieanalyse, Monotonie- und Krümmungsintervallen.
+* **Interaktiver Graph:**
+    * Visualisiert das generierte Polynom zusammen mit seinen Nullstellen, Extrema und Wendepunkten.
+    * Matplotlib-Toolbar für Zoom, Verschiebung und Speichern des Graphen.
+    * Optimierte automatische Achsenlimits mit der Möglichkeit, manuell herauszuzoomen, um den Graphen über ein weites Intervall zu betrachten.
+* **Benutzerfreundliche GUI:**
+    * Intuitive Oberfläche mit Dropdown-Menüs und direkter Eingabe.
+    * Statusleiste für Rückmeldungen.
+    * "Ich fühle mich glücklich!"-Modus für zufällige Polynome.
+    * Option zum Erzwingen ganzzahliger Koeffizienten.
+    * Startfenstergröße über Kommandozeilenargumente anpassbar.
 
 ---
-
 
 ### Voraussetzungen
 
@@ -37,7 +54,35 @@ Mit der Option, **ganzzahlige Koeffizienten zu erzwingen** und dem **"Ich fühle
     * `tkinter` (standardmäßig in Python enthalten)
     * `numpy`
     * `matplotlib`
+    * `argparse` (standardmäßig in Python enthalten)
+    * `re` (standardmäßig in Python enthalten)
 
+---
+
+## 🚀 Erste Schritte
+
+1.  **Klonen oder Herunterladen:**
+    ```bash
+    git clone [https://github.com/FisherSteve/PolyGenius.git](https://github.com/FisherSteve/PolyGenius.git) 
+    cd PolyGenius
+    ```
+   
+2.  **Abhängigkeiten installieren (falls noch nicht geschehen):**
+    ```bash
+    pip install numpy matplotlib
+    ```
+
+3.  **Anwendung starten:**
+    Führe das Skript über die Kommandozeile aus:
+    ```bash
+    python PolyGeniusBeta.py
+    ```
+   
+
+    Optional kannst du die Startfenstergröße übergeben:
+    ```bash
+    python dein_programm_name.py --width 1600 --height 1000
+    ```
 
 ---
 
@@ -54,24 +99,26 @@ Möchtest du **PolyGenius** an Freunde oder Kollegen weitergeben, die keine Pyth
     ```
 
 2.  **In das Projektverzeichnis wechseln:**
-    Navigiere in der Kommandozeile zu dem Ordner, in dem sich deine Datei `PolyGeniusBeta.py` befindet. Zum Beispiel:
+    Navigiere in der Kommandozeile zu dem Ordner, in dem sich deine Python-Datei (z.B. `poly_genius.py`) befindet. Zum Beispiel:
     ```bash
-    cd C:\Users\DeinNutzername\Dokumente\DeinProjektordner
+    cd C:\Pfad\zu\deinem\Projektordner
     ```
-    *(Passe den Pfad entsprechend an!)*
 
 3.  **Die .exe-Datei erstellen:**
-    Führe den folgenden Befehl in der Kommandozeile aus. Er teilt PyInstaller mit, dass eine einzelne, fensterbasierte (`--windowed`) `.exe`-Datei aus deiner `PolyGeniusBeta.py` erstellt werden soll:
+    Führe den folgenden Befehl in der Kommandozeile aus. Er teilt PyInstaller mit, dass eine einzelne, fensterbasierte (`--windowed`) `.exe`-Datei erstellt werden soll:
     ```bash
-    pyinstaller --onefile --windowed PolyGeniusBeta.py
+    pyinstaller --onefile --windowed dein_programm_name.py
     ```
-    * `--onefile`: Packt die gesamte Anwendung in **eine einzige `.exe`-Datei**. Das ist super praktisch für die Verteilung.
-    * `--windowed` (oder `--noconsole`): Verhindert, dass beim Start der `.exe` ein zusätzliches schwarzes Konsolenfenster im Hintergrund geöffnet wird – ideal für Tkinter-GUIs.
-    * *(Optional: Möchtest du ein eigenes Icon für deine `.exe`? Füge `--icon=mein_icon.ico` hinzu, wobei `mein_icon.ico` der Pfad zu deiner Icon-Datei im `.ico`-Format ist.)*
+    * `--onefile`: Packt die gesamte Anwendung in **eine einzige `.exe`-Datei**.
+    * `--windowed` (oder `--noconsole`): Verhindert, dass beim Start der `.exe` ein zusätzliches Konsolenfenster geöffnet wird.
+    * *(Optional: Für ein eigenes Icon füge `--icon=dein_icon.ico` hinzu.)*
 
 4.  **Die fertige .exe finden:**
-    Nachdem PyInstaller seine Arbeit beendet hat (das kann ein paar Minuten dauern), findest du die generierte `.exe`-Datei im Ordner `dist` in deinem Projektverzeichnis.
-    
-    Du kannst sie dann an deine Kollegen weitergeben!
+    Nachdem PyInstaller seine Arbeit beendet hat, findest du die generierte `.exe`-Datei im Ordner `dist` in deinem Projektverzeichnis.
 
 ---
+
+## Lizenz
+
+Dieses Projekt ist unter der MIT-Lizenz lizenziert - siehe die [LICENSE.md](LICENSE.md)-Datei für Details (falls vorhanden).
+
