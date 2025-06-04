@@ -7,11 +7,13 @@
 
 ## 💡 Projektübersicht
 
-**PolyGenius** ist eine interaktive Desktop-Anwendung, die mit Python und Tkinter entwickelt wurde, um die Generierung, Analyse und Visualisierung von Polynomfunktionen (bis zum 4. Grad, einschließlich biquadratischer, kubischer, quadratischer und linearer Funktionen) zu vereinfachen. Egal, ob Sie bestimmte Eigenschaften wie Nullstellen, Extrema, Wendepunkte, Skalierungsfaktoren oder direkt die Koeffizienten vorgeben möchten – PolyGenius berechnet das entsprechende Polynom, zeigt seine Ableitungen und kritischen Punkte an und visualisiert es in einem interaktiven Graphen.
+**PolyGenius** ist eine interaktive Desktop-Anwendung, entwickelt mit Python und Tkinter, die primär darauf ausgelegt ist, Lehrkräften und Aufgabenstellern die **Erstellung passgenauer Polynomfunktionen für Unterrichtsmaterialien und Textaufgaben** zu erleichtern. Das Tool vereinfacht die Generierung, Analyse und Visualisierung von Polynomfunktionen bis zum 4. Grad (einschließlich biquadratischer, kubischer, quadratischer und linearer Funktionen).
 
-**Neu:** Geben Sie Polynome direkt als Text ein (z.B. "x^3 - 2x + 4")! PolyGenius erkennt den Typ und die Koeffizienten automatisch.
+Definieren Sie Funktionen durch spezifische Eigenschaften wie Nullstellen, Extrema, Wendepunkte, Skalierungsfaktoren oder direkt über ihre Koeffizienten. PolyGenius berechnet das entsprechende Polynom, zeigt seine Ableitungen sowie charakteristische Punkte an und visualisiert die Funktion in einem interaktiven Graphen.
 
-Mit der Option, **ganzzahlige Koeffizienten zu erzwingen**, dem **"Ich fühle mich glücklich!"-Modus** für zufällige Polynome und der Möglichkeit, eine **detaillierte Kurvendiskussion** (inklusive Symmetrie, Monotonie und Krümmung) zu exportieren, ist PolyGenius ein ideales Werkzeug für Schüler, Studenten, Lehrer und alle, die ein tieferes Verständnis von Polynomfunktionen entwickeln oder Aufgaben erstellen möchten.
+**Neu:** Geben Sie Polynome direkt als Text ein (z.B. "x^3 - 2x + 4")! PolyGenius erkennt den Typ und die Koeffizienten automatisch und stellt die Funktion zur weiteren Analyse bereit.
+
+Mit Optionen wie dem **Erzwingen ganzzahliger Koeffizienten**, dem **"Ich fühle mich glücklich!"-Modus** für zufällige, aufgabenfreundliche Polynome und der Möglichkeit, eine **detaillierte Kurvendiskussion** (inklusive Symmetrie, Monotonie und Krümmung) zu exportieren, ist PolyGenius ein vielseitiges Werkzeug. Es unterstützt nicht nur bei der Erstellung von Lehrmaterial, sondern dient auch Schülern und Studenten als Lernhilfe zum besseren Verständnis von Polynomfunktionen.
 
 ---
 
@@ -66,7 +68,8 @@ Mit der Option, **ganzzahlige Koeffizienten zu erzwingen**, dem **"Ich fühle mi
     git clone [https://github.com/FisherSteve/PolyGenius.git](https://github.com/FisherSteve/PolyGenius.git) 
     cd PolyGenius
     ```
-   
+    
+
 2.  **Abhängigkeiten installieren (falls noch nicht geschehen):**
     ```bash
     pip install numpy matplotlib
@@ -77,8 +80,7 @@ Mit der Option, **ganzzahlige Koeffizienten zu erzwingen**, dem **"Ich fühle mi
     ```bash
     python PolyGeniusBeta.py
     ```
-   
-
+    
     Optional kannst du die Startfenstergröße übergeben:
     ```bash
     python dein_programm_name.py --width 1600 --height 1000
