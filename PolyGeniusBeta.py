@@ -5,6 +5,7 @@ from fractions import Fraction
 import numpy as np # Für die allgemeine Nullstellensuche und linspace
 import random # Für den "Ich fühle mich glücklich"-Button
 import re # Für das Parsen von Polynom-Strings
+import argparse # Für Kommandozeilenargumente
 
 # Matplotlib-Integration für Tkinter
 from matplotlib.figure import Figure
@@ -662,10 +663,10 @@ class PolynomialFeatures:
 class PolynomialAppGUI:
     MAX_PARAM_ROWS = 6 
 
-    def __init__(self, master):
+    def __init__(self, master, initial_width=1440, initial_height=970): # Standardgröße angepasst
         self.master = master
         master.title("Polynomfunktionen Generator")
-        master.geometry("1440x924") # Höhe um ca. 10% erhöht (war 840)
+        master.geometry(f"{initial_width}x{initial_height}") 
 
         self.style = ttk.Style()
         self.style.theme_use('clam') 
@@ -679,17 +680,21 @@ class PolynomialAppGUI:
         plot_outer_frame = ttk.LabelFrame(self.paned_window, text="Graphische Darstellung", padding="5")
         self.paned_window.add(plot_outer_frame, weight=2) 
 
-        # Frame für String-Eingabe HINZUGEFÜGT
+        # Frame für String-Eingabe
         string_input_outer_frame = ttk.Frame(controls_outer_frame)
-        string_input_outer_frame.pack(pady=(5,0), fill=tk.X) # Oben mit etwas Abstand, kein unterer Abstand hier
+        string_input_outer_frame.pack(pady=(5,0), fill=tk.X) 
 
         string_input_frame = ttk.LabelFrame(string_input_outer_frame, text="Polynom direkt eingeben", padding="10")
-        string_input_frame.pack(pady=0, fill=tk.X) # Kein vertikaler Abstand für den inneren Frame
+        string_input_frame.pack(pady=0, fill=tk.X) 
         
         self.poly_string_input_var = tk.StringVar()
         ttk.Label(string_input_frame, text="P(x) =").pack(side=tk.LEFT, padx=(0,5))
-        self.poly_string_entry = ttk.Entry(string_input_frame, textvariable=self.poly_string_input_var, width=45) # Breite angepasst
+        self.poly_string_entry = ttk.Entry(string_input_frame, textvariable=self.poly_string_input_var, width=45) 
         self.poly_string_entry.pack(side=tk.LEFT, padx=0, expand=True, fill=tk.X)
+        
+        self.clear_string_button = ttk.Button(string_input_frame, text="X", command=lambda: self.poly_string_input_var.set(""), width=3)
+        self.clear_string_button.pack(side=tk.LEFT, padx=(2,5))
+
         self.parse_string_button = ttk.Button(string_input_frame, text="Übernehmen & Analysieren", command=self.apply_parsed_polynomial)
         self.parse_string_button.pack(side=tk.LEFT, padx=(5,0))
 
@@ -708,7 +713,7 @@ class PolynomialAppGUI:
         
         self.construction_method_var = tk.StringVar()
         self.cubic_construction_options = {
-            "Aus Koeffizienten (a,b,c,d)": "direct_coeffs_cubic", # NEU
+            "Aus Koeffizienten (a,b,c,d)": "direct_coeffs_cubic", 
             "Sattelpunkt definieren": "from_saddle_point",
             "Extrema-Lagen (x-Werte) definieren": "from_extrema_locations",
             "Extrema (x-Werte) & y-Ziel für q1": "from_extrema_locations_and_one_y_target", 
@@ -753,10 +758,9 @@ class PolynomialAppGUI:
         
         self.input_params_frame = ttk.LabelFrame(controls_outer_frame, text="Parameter", padding="10")
         self.input_params_frame.pack(pady=5, fill=tk.X, expand=False) 
-        # Spaltenkonfiguration für bessere Lesbarkeit
-        self.input_params_frame.columnconfigure(0, weight=0, minsize=200)  # Spalte für Labels
-        self.input_params_frame.columnconfigure(1, weight=0, minsize=150)  # Spalte für Eingabefelder (feste Mindestbreite)
-        self.input_params_frame.columnconfigure(2, weight=1, minsize=100)  # Spalte für Hinweise (NIMMT DEN RESTPLATZ)
+        self.input_params_frame.columnconfigure(0, weight=0, minsize=200)  
+        self.input_params_frame.columnconfigure(1, weight=0, minsize=150)  
+        self.input_params_frame.columnconfigure(2, weight=1, minsize=100)  
         
         self.param_row_widgets = []
         self.param_row_min_height = 30 
@@ -764,7 +768,7 @@ class PolynomialAppGUI:
             self.input_params_frame.rowconfigure(i, minsize=self.param_row_min_height)
             lbl = ttk.Label(self.input_params_frame, text="")
             entry_var = tk.StringVar()
-            entry = ttk.Entry(self.input_params_frame, textvariable=entry_var, width=20) # Breite der Entry-Felder
+            entry = ttk.Entry(self.input_params_frame, textvariable=entry_var, width=20) 
             hint_lbl = ttk.Label(self.input_params_frame, text="", foreground="blue", font=("TkDefaultFont", 8))
             self.param_row_widgets.append({'label': lbl, 'entry_var': entry_var, 'entry': entry, 'hint': hint_lbl})
             
@@ -774,8 +778,8 @@ class PolynomialAppGUI:
         button_frame = ttk.Frame(controls_outer_frame) 
         button_frame.pack(pady=10)
 
-        generate_button = ttk.Button(button_frame, text="Polynom generieren und analysieren", command=self.generate_and_display)
-        generate_button.pack(side=tk.LEFT, padx=5)
+        self.generate_button = ttk.Button(button_frame, text="Polynom generieren und analysieren", command=self.generate_and_display) # self.generate_button
+        self.generate_button.pack(side=tk.LEFT, padx=5)
         
         self.flip_extrema_button = ttk.Button(button_frame, text="Extrema-Typ umkehren (K)", command=self.flip_extrema_type)
         
@@ -807,6 +811,12 @@ class PolynomialAppGUI:
         self.export_discussion_button = ttk.Button(output_frame, text="Kurvendiskussion exportieren", command=self.export_curve_discussion, state=tk.DISABLED)
         self.export_discussion_button.grid(row=row_idx, column=0, columnspan=2, pady=10)
 
+        # Statusleiste HINZUGEFÜGT
+        self.status_label_var = tk.StringVar()
+        status_bar = ttk.Label(controls_outer_frame, textvariable=self.status_label_var, relief=tk.SUNKEN, anchor=tk.W, padding=2)
+        status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+        self.update_status("Bereit.")
+
 
         self.fig = Figure(figsize=(6, 4.5), dpi=100) 
         self.plot_ax = self.fig.add_subplot(111)
@@ -826,6 +836,9 @@ class PolynomialAppGUI:
 
         self.canvas.draw() 
         self.update_ui_for_poly_type() 
+
+    def update_status(self, message):
+        self.status_label_var.set(message)
 
     def on_modifier_toggle(self):
         self._apply_param_hints()
@@ -1301,6 +1314,7 @@ class PolynomialAppGUI:
             if self.analyzed_poly: 
                 self.display_poly_info(self.analyzed_poly) 
                 self.export_discussion_button.config(state=tk.NORMAL) 
+                self.update_status("Polynom generiert und analysiert.")
             else: 
                 if not called_from_lucky_button: messagebox.showerror("Fehler", "Polynom konnte nicht generiert werden (nach Verschiebung).")
                 else: raise ValueError("Polynom konnte nicht generiert werden nach Verschiebung (Lucky Button).")
@@ -1309,10 +1323,12 @@ class PolynomialAppGUI:
             if called_from_lucky_button: raise e 
             messagebox.showerror("Eingabefehler oder ungültige Konstruktion", str(e))
             self.export_discussion_button.config(state=tk.DISABLED)
+            self.update_status(f"Fehler: {str(e)[:50]}...") # Kurze Fehlermeldung in Statusleiste
         except Exception as e: 
             import traceback
             messagebox.showerror("Unerwarteter Fehler", f"Fehler: {str(e)}\n\nTraceback:\n{traceback.format_exc()}")
             self.export_discussion_button.config(state=tk.DISABLED)
+            self.update_status("Unerwarteter Fehler.")
 
     def _format_number_list_for_display(self, data_list, precision=3):
         if data_list is None or (isinstance(data_list, list) and not data_list):
@@ -1495,6 +1511,7 @@ class PolynomialAppGUI:
         features = PolynomialFeatures(self.analyzed_poly)
         discussion_text = features.get_full_discussion()
         ExportDialog(self.master, "Kurvendiskussion Export", discussion_text)
+        self.update_status("Kurvendiskussion exportiert.")
         
     def _generate_random_value(self, is_integer_only=False, non_zero=False, 
                                min_val=-5, max_val=5, 
@@ -1849,6 +1866,9 @@ class PolynomialAppGUI:
                          self.param_entries[self.x_shift_specific_param_name].set("0")
                     
                     self.generate_and_display(use_specific_x_shift=False, parsed_coeffs=coeffs) # Direkt mit geparsten Koeffizienten generieren
+                    if self.generate_button: self.generate_button.focus_set() # Fokus setzen
+                    self.update_status(f"Polynom '{poly_string}' übernommen und analysiert.")
+
                 else:
                     messagebox.showerror("Fehler", f"Konstruktionsmethode '{target_construction_method}' nicht gefunden für Typ '{determined_type}'.")
             else:
@@ -1856,12 +1876,19 @@ class PolynomialAppGUI:
 
         except ValueError as e:
             messagebox.showerror("Parsing-Fehler", str(e))
+            self.update_status(f"Parsing-Fehler: {str(e)[:50]}...")
         except Exception as e_gen:
             import traceback
             messagebox.showerror("Unerwarteter Fehler beim Parsen", f"{str(e_gen)}\n{traceback.format_exc()}")
+            self.update_status("Unerwarteter Parsing-Fehler.")
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Polynomfunktionen Generator")
+    parser.add_argument("--width", type=int, default=1440, help="Startbreite des Fensters")
+    parser.add_argument("--height", type=int, default=970, help="Starthöhe des Fensters") # Höhe leicht erhöht
+    args = parser.parse_args()
+
     root = tk.Tk()
-    app = PolynomialAppGUI(root)
+    app = PolynomialAppGUI(root, initial_width=args.width, initial_height=args.height)
     root.mainloop()
