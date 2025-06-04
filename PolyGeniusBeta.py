@@ -1553,6 +1553,7 @@ class PolynomialAppGUI:
         return str(fallback_val) 
 
     def i_feel_lucky(self):
+        self.poly_string_input_var.set("") # String-Eingabe leeren
         poly_type = self.poly_type_var.get()
         current_construction_options = {}
         if poly_type == "Kubisch": current_construction_options = self.cubic_construction_options
@@ -1595,7 +1596,7 @@ class PolynomialAppGUI:
                         if param_name in ["x0", "q1", "q2", "q1_val", "q2_val", "xw", "r2", "r3"]: is_int_only = True 
                         elif param_name in ["D0", "C0", "y_at_q1_onetarget", "y1_val", "y2_val"]:
                             is_int_only = self.aim_int_y_var.get(); current_min, current_max = y_coord_range
-                        elif param_name in ["K_user", "a_coeff", "scale_factor_S", "K_user_onetarget"]:
+                        elif param_name in ["K_user", "a_coeff", "scale_factor_S", "K_user_onetarget","a_cubic_coeff"]: # a_cubic_coeff hinzugefügt
                             non_zero_needed = True; current_min, current_max = scale_val_range
                             if param_name == "K_user" and self.force_int_coeffs_var.get(): 
                                 random_val_str = str(random.choice([-18,-12,-6,6,12,18]))
@@ -1605,7 +1606,8 @@ class PolynomialAppGUI:
                             else: non_zero_needed = True; current_min, current_max = scale_val_range
                             entry_var_tk.set(random_val_str); continue
                         elif param_name == "delta_q": is_int_only = True; non_zero_needed = True; current_min, current_max = delta_range
-                        elif param_name == "C1_coeff": current_min, current_max = scale_val_range
+                        elif param_name in ["C1_coeff", "b_cubic_coeff", "c_cubic_coeff", "d_cubic_coeff"]: # b,c,d für kubisch hinzugefügt
+                             current_min, current_max = scale_val_range # Können auch 0 sein
                     elif poly_type == "Quadratisch":
                         if param_name in ["h_vertex"]: is_int_only = True
                         elif param_name in ["k_vertex"]: is_int_only = self.aim_int_y_var.get(); current_min, current_max = y_coord_range
