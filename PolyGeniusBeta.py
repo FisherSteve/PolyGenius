@@ -40,7 +40,9 @@ class CubicPolynomial:
 
         for coeff_frac, power_str in coeff_power_pairs:
             if coeff_frac == 0:
-                continue 
+                if not (self.a == 0 and self.b == 0 and self.c == 0 and self.d == 0 and power_str == ""): # Nur wenn alles 0 ist und d=0, dann nichts
+                     continue
+
 
             sign_str, val_str = "", ""
             
@@ -56,24 +58,36 @@ class CubicPolynomial:
             else: 
                 val_str = f"{abs_coeff.numerator}/{abs_coeff.denominator}"
 
+            # Spezialfall: Wenn der Koeffizient 0 ist, aber es der einzige Term ist (z.B. P(x)=0),
+            # dann soll "0" angezeigt werden. Dies wird oben bereits behandelt.
+            # Wenn der Koeffizient 0 ist und es nicht der erste Term ist, wird er übersprungen.
+            if coeff_frac == 0 and not (is_first_displayed_term and power_str == "" and len(processed_terms) == 0) : # d=0 und sonst nichts
+                if not (self.a == 0 and self.b == 0 and self.c == 0 and self.d == 0 and power_str == ""):
+                    continue
+
+
             if is_first_displayed_term and val_str == "" and sign_str == "" and power_str != "" and coeff_frac > 0 :
                  pass 
             elif is_first_displayed_term and val_str == "" and sign_str == "-" and power_str != "":
                  pass 
-
-            processed_terms.append(f"{sign_str}{val_str}{power_str}")
-            is_first_displayed_term = False 
+            
+            # Wenn es der einzige Term ist und der Koeffizient 0 ist, aber d=0 (Nullpolynom)
+            if coeff_frac == 0 and is_first_displayed_term and power_str == "" and len(processed_terms) == 0:
+                processed_terms.append("0") # Zeige "0" für P(x)=0
+            else:
+                processed_terms.append(f"{sign_str}{val_str}{power_str}")
+            
+            if coeff_frac != 0: # Nur wenn ein Term tatsächlich hinzugefügt wurde
+                is_first_displayed_term = False 
             
         final_str = "".join(processed_terms)
         
-        if not final_str: return "0" # Sollte nur passieren, wenn alle Koeffizienten 0 waren
+        if not final_str: return "0" 
         
         return final_str
 
     def evaluate(self, x):
-        # Für numpy arrays oder einzelne Werte, konvertiere zu float für matplotlib
         if isinstance(x, np.ndarray):
-            # Vektorisiere die Fraction-Berechnung oder konvertiere Koeffizienten zu float
             a_f, b_f, c_f, d_f = float(self.a), float(self.b), float(self.c), float(self.d)
             return a_f * x**3 + b_f * x**2 + c_f * x + d_f
         else:
@@ -114,6 +128,28 @@ class CubicPolynomial:
         return cls(a_p, b_p, c_p, d_p)
 
     @classmethod
+    def from_extrema_locations_and_one_y_target(cls, q1, q2, y_at_q1, K_user, force_integer_coeffs=False):
+        f_q1, f_q2 = Fraction(q1), Fraction(q2)
+        f_y_at_q1 = Fraction(y_at_q1)
+        f_K_user = Fraction(K_user)
+        if f_q1 == f_q2: raise ValueError("q1 und q2 (x-Koordinaten der Extrema) müssen verschieden sein.")
+        if f_K_user == 0: raise ValueError("K_user (Skalierungsfaktor) darf nicht Null sein.")
+        def term_val_base(x_val, f_q1_in, f_q2_in):
+            x = Fraction(x_val) 
+            return 2*x**3 - 3*(f_q1_in+f_q2_in)*x**2 + 6*f_q1_in*f_q2_in*x
+        T_at_q1 = term_val_base(f_q1, f_q1, f_q2)
+        C0 = f_y_at_q1 - f_K_user * T_at_q1
+        a_p,b_p,c_p,d_p = 2*f_K_user, -3*f_K_user*(f_q1+f_q2), 6*f_K_user*f_q1*f_q2, C0
+        if force_integer_coeffs:
+            a_final = a_p.limit_denominator(1)
+            if a_final == 0: 
+                raise ValueError("Mit diesen Vorgaben und 'Ganzzahlige Koeffizienten' wird der x^3-Term Null.")
+            return cls(a_final,b_p.limit_denominator(1),c_p.limit_denominator(1),d_p.limit_denominator(1))
+        else:
+            if a_p == 0 : raise ValueError("Interner Fehler: a_p wurde Null, obwohl K_user nicht Null sein sollte.")
+            return cls(a_p, b_p, c_p, d_p)
+
+    @classmethod
     def from_extrema_locations_and_values(cls, q1, q2, y1, y2, force_integer_coeffs=False):
         f_q1, f_q2 = Fraction(q1), Fraction(q2)
         f_y1, f_y2 = Fraction(y1), Fraction(y2)
@@ -128,27 +164,15 @@ class CubicPolynomial:
             else: raise ValueError("Keine Lösung für K_user: T(q1)=T(q2) aber y1!=y2.")
         K_user = (f_y2 - f_y1) / (T2 - T1)
         C0 = f_y1 - K_user * T1
-        
-        a_p = 2 * K_user
-        b_p = -3 * K_user * (f_q1 + f_q2)
-        c_p = 6 * K_user * f_q1 * f_q2
-        d_p = C0
-
+        a_p,b_p,c_p,d_p = 2*K_user, -3*K_user*(f_q1+f_q2), 6*K_user*f_q1*f_q2, C0
         if force_integer_coeffs:
             a_final = a_p.limit_denominator(1)
             if a_final == 0: 
-                raise ValueError("Mit diesen Extrema-Vorgaben und 'Ganzzahlige Koeffizienten' "
-                                 "wird der x^3-Term Null. Kein kubisches Polynom möglich. "
-                                 "Ändern Sie die y-Werte oder deaktivieren Sie die Option.")
-            return cls(a_final, 
-                       b_p.limit_denominator(1), 
-                       c_p.limit_denominator(1), 
-                       d_p.limit_denominator(1))
+                raise ValueError("Mit diesen Extrema-Vorgaben und 'Ganzzahlige Koeffizienten' wird der x^3-Term Null.")
+            return cls(a_final,b_p.limit_denominator(1),c_p.limit_denominator(1),d_p.limit_denominator(1))
         else:
-            if a_p == 0 : 
-                 raise ValueError("Interner Fehler: a_p wurde Null, obwohl K_user nicht Null sein sollte (keine Ganzzahligkeit erzwungen).")
+            if a_p == 0 : raise ValueError("Interner Fehler: a_p wurde Null, obwohl K_user nicht Null sein sollte.")
             return cls(a_p, b_p, c_p, d_p)
-
 
     @classmethod
     def from_inflection_point_and_delta_q(cls, xw, delta_q, K_user, C0):
@@ -183,9 +207,7 @@ class CubicPolynomial:
         if force_integer_coeffs:
             b_final = b_p.limit_denominator(1)
             if b_final == 0:
-                raise ValueError("Mit diesen Scheitelpunkt-Vorgaben und 'Ganzzahlige Koeffizienten' "
-                                 "wird der x^2-Term Null. Kein quadratisches Polynom möglich. "
-                                 "Ändern Sie die Werte oder deaktivieren Sie die Option.")
+                raise ValueError("Mit diesen Scheitelpunkt-Vorgaben und 'Ganzzahlige Koeffizienten' wird der x^2-Term Null.")
             return cls(0, b_final, c_p.limit_denominator(1), d_p.limit_denominator(1))
         else:
             return cls(0, b_p, c_p, d_p)
@@ -258,7 +280,7 @@ class CubicPolynomial:
             return ["Numerische Lösung fehlgeschlagen"]
 
 class PolynomialAppGUI:
-    MAX_PARAM_ROWS = 5 # Maximale Anzahl von Parameterzeilen, die wir erwarten
+    MAX_PARAM_ROWS = 5 
 
     def __init__(self, master):
         self.master = master
@@ -293,6 +315,7 @@ class PolynomialAppGUI:
         self.cubic_construction_options = {
             "Sattelpunkt definieren": "from_saddle_point",
             "Extrema-Lagen (x-Werte) definieren": "from_extrema_locations",
+            "Extrema (x-Werte) & y-Ziel für q1": "from_extrema_locations_and_one_y_target", 
             "Extrema (x- und y-Werte) definieren": "from_extrema_locations_and_values", 
             "WP & Abstand zu Extrema definieren": "from_inflection_point_and_delta_q",
             "WP (x-Wert), Extrema reell": "from_integer_inflection_real_extrema",
@@ -331,17 +354,17 @@ class PolynomialAppGUI:
         self.input_params_frame.columnconfigure(0, weight=1) 
         self.input_params_frame.columnconfigure(1, weight=2) 
         
-        # Pre-create parameter rows
         self.param_row_widgets = []
+        self.param_row_min_height = 30 
         for i in range(self.MAX_PARAM_ROWS):
+            self.input_params_frame.rowconfigure(i, minsize=self.param_row_min_height)
             lbl = ttk.Label(self.input_params_frame, text="")
             entry_var = tk.StringVar()
             entry = ttk.Entry(self.input_params_frame, textvariable=entry_var, width=30)
             hint_lbl = ttk.Label(self.input_params_frame, text="", foreground="blue", font=("TkDefaultFont", 8))
             self.param_row_widgets.append({'label': lbl, 'entry_var': entry_var, 'entry': entry, 'hint': hint_lbl})
-            # Widgets werden erst in _configure_param_entry_row gegridded und sichtbar gemacht
-
-        self.param_entries = {} # Dictionary to map param_name to its StringVar for get_param_value
+            
+        self.param_entries = {} 
 
         button_frame = ttk.Frame(top_frame)
         button_frame.pack(pady=10)
@@ -349,8 +372,12 @@ class PolynomialAppGUI:
         generate_button = ttk.Button(button_frame, text="Polynom generieren und analysieren", command=self.generate_and_display)
         generate_button.pack(side=tk.LEFT, padx=5)
         
+        self.flip_extrema_button = ttk.Button(button_frame, text="Extrema-Typ umkehren", command=self.flip_extrema_type)
+        # Wird in update_ui_for_poly_type je nach Bedarf gepackt/entfernt
+
         lucky_button = ttk.Button(button_frame, text="Ich fühle mich glücklich!", command=self.i_feel_lucky)
         lucky_button.pack(side=tk.LEFT, padx=5)
+
 
         output_frame = ttk.LabelFrame(top_frame, text="Ergebnisse", padding="10")
         output_frame.pack(pady=5, expand=True, fill=tk.BOTH)
@@ -394,7 +421,8 @@ class PolynomialAppGUI:
 
     def update_ui_for_poly_type(self, event=None):
         poly_type = self.poly_type_var.get()
-        self.clear_param_input_fields_display() # Nur Widgets ausblenden und Texte löschen
+        self.clear_param_input_fields_display() 
+        self.flip_extrema_button.pack_forget() # Standardmäßig ausblenden
 
         if poly_type == "Kubisch":
             self.construction_frame.config(text="Primäre Konstruktionseigenschaft (Kubisch)")
@@ -429,34 +457,27 @@ class PolynomialAppGUI:
 
 
     def clear_param_input_fields_display(self):
-        """Blendet alle vorab erstellten Parameterzeilen aus und löscht ihre Werte/Texte."""
         for i in range(self.MAX_PARAM_ROWS):
             row = self.param_row_widgets[i]
-            row['label'].grid_remove()
-            row['entry'].grid_remove()
-            row['hint'].grid_remove()
+            row['label'].grid_forget()
+            row['entry'].grid_forget()
+            row['hint'].grid_forget()
             row['label'].config(text="")
-            row['entry_var'].set("")
+            row['entry_var'].set("") 
             row['hint'].config(text="")
-        self.param_entries.clear() # Das Dictionary, das param_name auf entry_var mappt
+        self.param_entries.clear() 
 
     def _configure_param_entry_row(self, row_index, param_name, label_text, default_value=""):
-        """Konfiguriert und zeigt eine vorab erstellte Parameterzeile an."""
         if row_index >= self.MAX_PARAM_ROWS:
-            print(f"Warnung: Es wird versucht, mehr als {self.MAX_PARAM_ROWS} Parameterzeilen zu verwenden.")
-            return row_index # Nichts tun, wenn Index außerhalb des Bereichs liegt
-
+            print(f"Warnung: Zeile {row_index} überschreitet MAX_PARAM_ROWS.")
+            return row_index 
         row = self.param_row_widgets[row_index]
-        
         row['label'].config(text=label_text)
-        row['entry_var'].set(str(default_value))
-        # Hinweis wird später durch _apply_param_hints gesetzt
-
+        row['entry_var'].set(str(default_value)) 
         row['label'].grid(row=row_index, column=0, sticky=tk.W, padx=5, pady=3)
         row['entry'].grid(row=row_index, column=1, sticky=tk.EW, padx=5, pady=3)
         row['hint'].grid(row=row_index, column=2, sticky=tk.W, padx=5)
-        
-        self.param_entries[param_name] = row['entry_var'] # Wichtig für get_param_value
+        self.param_entries[param_name] = row['entry_var'] 
         return row_index + 1
     
     def _update_construction_params_display(self, event=None):
@@ -474,42 +495,47 @@ class PolynomialAppGUI:
         force_int_active = self.force_int_coeffs_var.get()
         aim_int_y_active = self.aim_int_y_var.get()
 
-        # Zuerst alle (sichtbaren) Hints leeren
-        for i in range(self.MAX_PARAM_ROWS):
-            row = self.param_row_widgets[i]
-            if row['hint'].winfo_ismapped(): # Nur wenn der Hint sichtbar ist
-                 row['hint'].config(text="")
-
+        for i in range(self.MAX_PARAM_ROWS): # Gehe über alle potenziellen Hint-Labels
+            row_widget_set = self.param_row_widgets[i]
+            # Nur wenn das Label-Widget dieser Zeile aktuell im Grid ist (d.h. die Zeile ist aktiv)
+            if row_widget_set['label'].winfo_ismapped() and row_widget_set['hint'].winfo_exists():
+                 row_widget_set['hint'].config(text="") # Erstmal leeren
 
         if poly_type == "Kubisch":
             method_name = self.cubic_construction_options.get(construction_key)
             if method_name == "from_saddle_point":
-                self.param_row_widgets[2]['hint'].config(text="Ganze Zahl & Vielfaches von 6" if force_int_active else "Kann Bruch sein (z.B. 1/6)")
-                if aim_int_y_active: self.param_row_widgets[1]['hint'].config(text="Ganzzahlig für ganzz. y am SP")
+                if "P_triple_prime_0" in self.param_entries: self.param_row_widgets[2]['hint'].config(text="Ganze Zahl & Vielfaches von 6" if force_int_active else "Kann Bruch sein (z.B. 1/6)")
+                if aim_int_y_active and "D0" in self.param_entries: self.param_row_widgets[1]['hint'].config(text="Ganzzahlig für ganzz. y am SP")
             elif method_name == "from_extrema_locations":
-                if aim_int_y_active: self.param_row_widgets[3]['hint'].config(text="Ganzzahlig für ganzz. y-Extrema") # C0 ist 4. Parameter (Index 3)
+                if aim_int_y_active and "C0" in self.param_entries: self.param_row_widgets[3]['hint'].config(text="Ganzzahlig für ganzz. y-Extrema")
+                if "K_user" in self.param_entries: self.param_row_widgets[2]['hint'].config(text="Vorzeichen von K bestimmt Min/Max-Reihenfolge")
+            elif method_name == "from_extrema_locations_and_one_y_target":
+                if aim_int_y_active and "y_at_q1_onetarget" in self.param_entries: self.param_row_widgets[2]['hint'].config(text="Ganzzahliger Ziel-y-Wert")
+                if "K_user_onetarget" in self.param_entries: self.param_row_widgets[3]['hint'].config(text="Vorzeichen von K bestimmt Min/Max-Reihenfolge")
+                if force_int_active and "q1_onetarget" in self.param_entries : self.param_row_widgets[0]['hint'].config(text="Ganzz. Koeff. werden angestrebt")
+
             elif method_name == "from_extrema_locations_and_values":
-                if aim_int_y_active: 
-                    self.param_row_widgets[1]['hint'].config(text="Ganzzahliger y-Wert") # y1_val
-                    self.param_row_widgets[3]['hint'].config(text="Ganzzahliger y-Wert") # y2_val
-                if force_int_active: 
-                     self.param_row_widgets[0]['hint'].config(text="Ganzz. Koeff. werden angestrebt") # q1_val
+                if aim_int_y_active and "y1_val" in self.param_entries: self.param_row_widgets[1]['hint'].config(text="Ganzzahliger y-Wert") 
+                if aim_int_y_active and "y2_val" in self.param_entries: self.param_row_widgets[3]['hint'].config(text="Ganzzahliger y-Wert") 
+                if force_int_active and "q1_val" in self.param_entries: 
+                     self.param_row_widgets[0]['hint'].config(text="Ganzz. Koeff. werden angestrebt") 
             elif method_name == "from_inflection_point_and_delta_q":
-                if aim_int_y_active: self.param_row_widgets[3]['hint'].config(text="Ganzzahlig für ganzz. y-Werte (beeinflusst d)")
+                if aim_int_y_active and "C0" in self.param_entries: self.param_row_widgets[3]['hint'].config(text="Ganzzahlig für ganzz. y-Werte (beeinflusst d)")
+                if "K_user" in self.param_entries: self.param_row_widgets[2]['hint'].config(text="Vorzeichen von K bestimmt Min/Max-Reihenfolge")
             elif method_name == "from_integer_inflection_real_extrema":
-                self.param_row_widgets[3]['hint'].config(text="Muss anderes Vorzeichen als 'a' haben für Extrema") # C1_coeff
-                if aim_int_y_active: self.param_row_widgets[1]['hint'].config(text="Ganzzahlig für ganzz. y am WP") # D0
+                if "C1_coeff" in self.param_entries: self.param_row_widgets[3]['hint'].config(text="Muss anderes Vorzeichen als 'a' haben für Extrema") 
+                if aim_int_y_active and "D0" in self.param_entries: self.param_row_widgets[1]['hint'].config(text="Ganzzahlig für ganzz. y am WP") 
         
         elif poly_type == "Quadratisch":
             method_name = self.quadratic_construction_options.get(construction_key)
             if method_name == "from_quadratic_vertex_and_scale":
-                if aim_int_y_active: self.param_row_widgets[1]['hint'].config(text="Ganzzahlig für ganzz. y am Scheitel") # k_vertex
-                if force_int_active: self.param_row_widgets[2]['hint'].config(text="Ganzz. Koeff. wenn h,k,scale_sq ganzz. oder passende Brüche") #scale_sq
+                if aim_int_y_active and "k_vertex" in self.param_entries: self.param_row_widgets[1]['hint'].config(text="Ganzzahlig für ganzz. y am Scheitel") 
+                if force_int_active and "scale_sq" in self.param_entries: self.param_row_widgets[2]['hint'].config(text="Ganzz. Koeff. wenn h,k,scale_sq ganzz. oder passende Brüche") 
         
         elif poly_type == "Linear":
             method_name = self.linear_construction_options.get(construction_key)
             if method_name == "from_linear_root_and_y_intercept":
-                 self.param_row_widgets[0]['hint'].config(text="Wenn 0, muss y-Abschnitt 0 sein (Steigung dann unbestimmt)") # root_x_lin
+                 if "root_x_lin" in self.param_entries: self.param_row_widgets[0]['hint'].config(text="Wenn 0, muss y-Abschnitt 0 sein (Steigung dann unbestimmt)") 
 
     def _update_cubic_construction_params_create_fields(self):
         self.clear_param_input_fields_display() 
@@ -517,6 +543,13 @@ class PolynomialAppGUI:
         construction_key = self.construction_method_var.get()
         method_name = self.cubic_construction_options.get(construction_key)
         current_row = 0
+        
+        # Flip-Button Management
+        if method_name in ["from_extrema_locations", "from_extrema_locations_and_one_y_target", "from_inflection_point_and_delta_q"]:
+            self.flip_extrema_button.pack(side=tk.LEFT, padx=5)
+        else:
+            self.flip_extrema_button.pack_forget()
+
         if method_name == "from_saddle_point":
             current_row = self._configure_param_entry_row(current_row, "x0", "x-Sattelpunkt (x0):", "1")
             current_row = self._configure_param_entry_row(current_row, "D0", "y-Sattelpunkt (D0):", "2")
@@ -526,6 +559,11 @@ class PolynomialAppGUI:
             current_row = self._configure_param_entry_row(current_row, "q2", "x-Extremum 2 (q2):", "2")
             current_row = self._configure_param_entry_row(current_row, "K_user", "Skalierungsfaktor K:", "1")
             current_row = self._configure_param_entry_row(current_row, "C0", "Konstante C0 (y-Versch.):", "0")
+        elif method_name == "from_extrema_locations_and_one_y_target": 
+            current_row = self._configure_param_entry_row(current_row, "q1_onetarget", "x-Extremum 1 (q1):", "0")
+            current_row = self._configure_param_entry_row(current_row, "q2_onetarget", "x-Extremum 2 (q2):", "2")
+            current_row = self._configure_param_entry_row(current_row, "y_at_q1_onetarget", "Ziel y-Wert bei q1:", "3")
+            current_row = self._configure_param_entry_row(current_row, "K_user_onetarget", "Skalierungsfaktor K:", "1")
         elif method_name == "from_extrema_locations_and_values": 
             current_row = self._configure_param_entry_row(current_row, "q1_val", "x-Extremum 1 (q1):", "0")
             current_row = self._configure_param_entry_row(current_row, "y1_val", "y-Wert bei q1 (y1):", "0")
@@ -555,6 +593,8 @@ class PolynomialAppGUI:
         construction_key = self.construction_method_var.get()
         method_name = self.quadratic_construction_options.get(construction_key)
         current_row = 0
+        self.flip_extrema_button.pack_forget() # Nicht für quadratisch relevant
+
         if method_name == "from_quadratic_vertex_and_scale":
             current_row = self._configure_param_entry_row(current_row, "h_vertex", "Scheitelpunkt x (h):", "1")
             current_row = self._configure_param_entry_row(current_row, "k_vertex", "Scheitelpunkt y (k):", "2")
@@ -573,6 +613,8 @@ class PolynomialAppGUI:
         construction_key = self.construction_method_var.get()
         method_name = self.linear_construction_options.get(construction_key)
         current_row = 0
+        self.flip_extrema_button.pack_forget() # Nicht für linear relevant
+
         if method_name == "from_linear_root_and_y_intercept":
             current_row = self._configure_param_entry_row(current_row, "root_x_lin", "Nullstelle x:", "1")
             current_row = self._configure_param_entry_row(current_row, "y_intercept_lin", "y-Achsenabschnitt (d):", "2")
@@ -585,7 +627,6 @@ class PolynomialAppGUI:
 
     def get_param_value(self, param_name, param_type_hint=Fraction):
         try:
-            # param_entries enthält jetzt die StringVars der sichtbaren/konfigurierten Felder
             if param_name not in self.param_entries:
                 raise ValueError(f"Parameter '{param_name}' ist für die aktuelle Auswahl nicht verfügbar.")
             val_str = self.param_entries[param_name].get().strip()
@@ -597,7 +638,6 @@ class PolynomialAppGUI:
                 return f_val.numerator
             return f_val 
         except KeyError: 
-            # Dieser Fall sollte durch die obige Prüfung abgedeckt sein, aber als Fallback
             raise ValueError(f"Parameter '{param_name}' nicht im UI gefunden (Programmierfehler).")
         except (ValueError, TypeError) as e: 
             raise ValueError(f"Ungültiger Wert für '{param_name}': '{val_str}' ({e}). Erwartet Zahl oder Bruch (z.B. 1/3).")
@@ -621,6 +661,9 @@ class PolynomialAppGUI:
                 elif method_name == "from_extrema_locations":
                     q1,q2,K,C0 = self.get_param_value("q1"),self.get_param_value("q2"),self.get_param_value("K_user"),self.get_param_value("C0")
                     poly = CubicPolynomial.from_extrema_locations(q1,q2,K,C0)
+                elif method_name == "from_extrema_locations_and_one_y_target": 
+                    q1,q2,y_at_q1,K_user = self.get_param_value("q1_onetarget"),self.get_param_value("q2_onetarget"),self.get_param_value("y_at_q1_onetarget"),self.get_param_value("K_user_onetarget")
+                    poly = CubicPolynomial.from_extrema_locations_and_one_y_target(q1,q2,y_at_q1,K_user,force_int_coeffs_global)
                 elif method_name == "from_extrema_locations_and_values": 
                     q1,y1,q2,y2 = self.get_param_value("q1_val"),self.get_param_value("y1_val"),self.get_param_value("q2_val"),self.get_param_value("y2_val")
                     poly = CubicPolynomial.from_extrema_locations_and_values(q1,q2,y1,y2,force_int_coeffs_global)
@@ -742,7 +785,6 @@ class PolynomialAppGUI:
     def _generate_random_value(self, is_integer_only=False, non_zero=False, 
                                min_val=-5, max_val=5, 
                                fraction_den_min=1, fraction_den_max=3, force_different_from=None):
-        """Generiert einen zufälligen Wert (ganze Zahl oder Bruch als String)."""
         attempt_count = 0
         while attempt_count < 20: 
             if is_integer_only or random.choice([True, False]): 
@@ -814,7 +856,7 @@ class PolynomialAppGUI:
 
                 self.force_int_coeffs_var.set(random.choice([True, False]))
                 self.aim_int_y_var.set(random.choice([True, False]))
-                self._apply_param_hints() # Nur Hints aktualisieren, nicht Felder neu erstellen
+                self._apply_param_hints() 
                 
                 x_coord_range = (-3, 3)
                 y_coord_range = (-5, 5)
@@ -830,10 +872,10 @@ class PolynomialAppGUI:
 
                     if param_name in ["x0", "q1", "q2", "q1_val", "q2_val", "xw", "h_vertex", "root_x_lin", "r2", "r3"]:
                         is_int_only = True 
-                    elif param_name in ["D0", "C0", "k_vertex", "y_intercept_lin", "y1_val", "y2_val"]:
+                    elif param_name in ["D0", "C0", "k_vertex", "y_intercept_lin", "y1_val", "y2_val", "y_at_q1_onetarget"]:
                          is_int_only = self.aim_int_y_var.get() 
                          current_min, current_max = y_coord_range
-                    elif param_name in ["K_user", "a_coeff", "scale_factor_S", "scale_sq", "c_lin"]:
+                    elif param_name in ["K_user", "a_coeff", "scale_factor_S", "scale_sq", "c_lin", "K_user_onetarget"]:
                         non_zero_needed = True
                         current_min, current_max = scale_val_range
                     elif param_name == "P_triple_prime_0":
@@ -860,11 +902,18 @@ class PolynomialAppGUI:
                 
                 if poly_type == "Kubisch":
                     active_method_name = self.cubic_construction_options.get(method_key_lucky)
-                    if active_method_name == "from_extrema_locations" or active_method_name == "from_extrema_locations_and_values":
-                        q1_var_name = "q1" if active_method_name == "from_extrema_locations" else "q1_val"
-                        q2_var_name = "q2" if active_method_name == "from_extrema_locations" else "q2_val"
+                    if active_method_name == "from_extrema_locations" or \
+                       active_method_name == "from_extrema_locations_and_values" or \
+                       active_method_name == "from_extrema_locations_and_one_y_target":
+                        
+                        q1_var_name = "q1" if active_method_name == "from_extrema_locations" else \
+                                      ("q1_val" if active_method_name == "from_extrema_locations_and_values" else "q1_onetarget")
+                        q2_var_name = "q2" if active_method_name == "from_extrema_locations" else \
+                                      ("q2_val" if active_method_name == "from_extrema_locations_and_values" else "q2_onetarget")
+                        
                         q1_var = self.param_entries.get(q1_var_name)
                         q2_var = self.param_entries.get(q2_var_name)
+
                         if q1_var and q2_var and q1_var.get() == q2_var.get():
                             try:
                                 q1_val_int = int(Fraction(q1_var.get()))
@@ -955,6 +1004,38 @@ class PolynomialAppGUI:
         while non_zero and fallback_val == 0: fallback_val = random.randint(min_val,max_val)
         while force_different_from is not None and fallback_val == force_different_from: fallback_val = random.randint(min_val,max_val)
         return str(fallback_val) 
+
+    def flip_extrema_type(self):
+        """Kehrt das Vorzeichen des relevanten K_user-Parameters um, um Min/Max zu tauschen."""
+        poly_type = self.poly_type_var.get()
+        if poly_type != "Kubisch":
+            messagebox.showinfo("Info", "Extrema-Typ umkehren ist nur für kubische Funktionen mit K_user relevant.")
+            return
+
+        construction_key = self.construction_method_var.get()
+        method_name = self.cubic_construction_options.get(construction_key)
+        
+        param_to_flip = None
+        if method_name == "from_extrema_locations":
+            param_to_flip = "K_user"
+        elif method_name == "from_extrema_locations_and_one_y_target":
+            param_to_flip = "K_user_onetarget"
+        elif method_name == "from_inflection_point_and_delta_q":
+            param_to_flip = "K_user"
+            
+        if param_to_flip and param_to_flip in self.param_entries:
+            try:
+                current_val_str = self.param_entries[param_to_flip].get()
+                current_frac = Fraction(current_val_str)
+                if current_frac != 0: # Nur umkehren, wenn nicht Null
+                    self.param_entries[param_to_flip].set(str(-current_frac))
+                    self.generate_and_display()
+                else:
+                    messagebox.showinfo("Info", f"{param_to_flip} ist Null und kann nicht einfach umgekehrt werden, um den Typ zu ändern.")
+            except ValueError:
+                messagebox.showerror("Fehler", f"Ungültiger Wert im Feld {param_to_flip}.")
+        else:
+            messagebox.showinfo("Info", "Extrema-Typ umkehren ist für die aktuelle Konstruktionsmethode nicht anwendbar oder der Parameter fehlt.")
 
 
 if __name__ == '__main__':
