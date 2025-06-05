@@ -362,22 +362,28 @@ def direct_coeffs_biquad_factory(A, B, D_val):
 
 
 class ExportDialog(tk.Toplevel):
-    def __init__(self, parent, title, text_content):
+    def __init__(self, parent, title, text_content, scale_factor=1.0): # scale_factor hinzugefügt
         super().__init__(parent)
         self.title(title)
+        self.scale_factor = scale_factor
+        
+        # Skalierte Schriftgröße für den Textbereich
+        scaled_font_size = max(1, int(10 * self.scale_factor))
+
+
         lines = text_content.count('\n') + 1
         width_char = 80 
         height_char = min(max(lines + 5, 15), 35) 
         
-        width_px = width_char * 8 
-        height_px = height_char * 18
+        width_px = int(width_char * 8 * self.scale_factor) 
+        height_px = int(height_char * 18 * self.scale_factor)
         self.geometry(f"{width_px}x{height_px}")
 
 
         main_frame = ttk.Frame(self, padding=10)
         main_frame.pack(expand=True, fill=tk.BOTH)
 
-        text_area = tk.Text(main_frame, wrap=tk.WORD, font=("Consolas", 10), relief=tk.SOLID, borderwidth=1)
+        text_area = tk.Text(main_frame, wrap=tk.WORD, font=("Consolas", scaled_font_size), relief=tk.SOLID, borderwidth=1)
         text_area.insert(tk.END, text_content)
         text_area.config(state=tk.DISABLED)
         
@@ -405,6 +411,7 @@ class ExportDialog(tk.Toplevel):
     def copy_to_clipboard(self, text):
         self.clipboard_clear()
         self.clipboard_append(text)
+        self.master.master.update_status("Text in Zwischenablage kopiert.") # Update Status in Haupt-GUI
         messagebox.showinfo("Kopiert", "Text wurde in die Zwischenablage kopiert.", parent=self)
 
 
@@ -663,13 +670,37 @@ class PolynomialFeatures:
 class PolynomialAppGUI:
     MAX_PARAM_ROWS = 6 
 
-    def __init__(self, master, initial_width=1440, initial_height=970): # Standardgröße angepasst
+    def __init__(self, master, initial_width=1440, initial_height=970, scale_factor=1.0): # Standardgröße und Skalierungsfaktor
         self.master = master
+        self.scale_factor = scale_factor
         master.title("Polynomfunktionen Generator")
-        master.geometry(f"{initial_width}x{initial_height}") 
+        master.geometry(f"{int(initial_width * self.scale_factor)}x{int(initial_height * self.scale_factor)}") 
 
         self.style = ttk.Style()
         self.style.theme_use('clam') 
+
+        # Basisschriftgrößen
+        self.base_font_size = 9 # Etwas kleiner für bessere Skalierbarkeit
+        self.base_consolas_font_size = 9
+        self.base_hint_font_size = 7
+        self.base_status_font_size = 8
+
+        # Skalierte Schriftgrößen
+        self.scaled_font_size = max(1, int(self.base_font_size * self.scale_factor))
+        self.scaled_consolas_font_size = max(1, int(self.base_consolas_font_size * self.scale_factor))
+        self.scaled_hint_font_size = max(1, int(self.base_hint_font_size * self.scale_factor))
+        self.scaled_status_font_size = max(1, int(self.base_status_font_size * self.scale_factor))
+
+        # Globale Stile anpassen
+        self.style.configure('.', font=('TkDefaultFont', self.scaled_font_size))
+        self.style.configure('TButton', font=('TkDefaultFont', self.scaled_font_size))
+        self.style.configure('TLabel', font=('TkDefaultFont', self.scaled_font_size))
+        self.style.configure('TLabelframe.Label', font=('TkDefaultFont', self.scaled_font_size, 'bold'))
+        # Combobox Schriftgröße (Dropdown und Eingabefeld)
+        self.master.option_add('*TCombobox*Listbox.font', ('TkDefaultFont', self.scaled_font_size))
+        # self.style.configure('TCombobox', postoffset=(0,0,0,0), font=('TkDefaultFont', self.scaled_font_size)) # Nicht immer zuverlässig für Eingabefeld
+        # Die Schriftgröße der Combobox-Eingabe wird oft vom Theme bestimmt, width in Zeichen ist besser
+
 
         self.paned_window = ttk.PanedWindow(master, orient=tk.HORIZONTAL)
         self.paned_window.pack(expand=True, fill=tk.BOTH, padx=10, pady=10)
@@ -689,7 +720,7 @@ class PolynomialAppGUI:
         
         self.poly_string_input_var = tk.StringVar()
         ttk.Label(string_input_frame, text="P(x) =").pack(side=tk.LEFT, padx=(0,5))
-        self.poly_string_entry = ttk.Entry(string_input_frame, textvariable=self.poly_string_input_var, width=45) 
+        self.poly_string_entry = ttk.Entry(string_input_frame, textvariable=self.poly_string_input_var, width=45, font=('TkDefaultFont', self.scaled_font_size)) 
         self.poly_string_entry.pack(side=tk.LEFT, padx=0, expand=True, fill=tk.X)
         
         self.clear_string_button = ttk.Button(string_input_frame, text="X", command=lambda: self.poly_string_input_var.set(""), width=3)
@@ -705,7 +736,7 @@ class PolynomialAppGUI:
         poly_types = ["Kubisch", "Biquadratisch", "Quadratisch", "Linear"] 
         ttk.Label(poly_type_frame, text="Typ wählen:").pack(side=tk.LEFT, padx=5)
         self.poly_type_menu = ttk.Combobox(poly_type_frame, textvariable=self.poly_type_var,
-                                           values=poly_types, state="readonly", width=20)
+                                           values=poly_types, state="readonly", width=20, font=('TkDefaultFont', self.scaled_font_size))
         self.poly_type_menu.pack(side=tk.LEFT, padx=5)
         self.poly_type_menu.bind("<<ComboboxSelected>>", self.update_ui_for_poly_type)
 
@@ -739,7 +770,7 @@ class PolynomialAppGUI:
         self.construction_method_label = ttk.Label(self.construction_frame, text="Konstruktion durch:")
         self.construction_method_menu = ttk.Combobox(self.construction_frame, 
                                                      textvariable=self.construction_method_var,
-                                                     state="readonly", width=40) 
+                                                     state="readonly", width=40, font=('TkDefaultFont', self.scaled_font_size)) 
         self.construction_method_menu.bind("<<ComboboxSelected>>", self._update_construction_params_display) 
         
         self.modifier_frame = ttk.LabelFrame(controls_outer_frame, text="Globale Modifikatoren", padding="10") 
@@ -758,18 +789,18 @@ class PolynomialAppGUI:
         
         self.input_params_frame = ttk.LabelFrame(controls_outer_frame, text="Parameter", padding="10")
         self.input_params_frame.pack(pady=5, fill=tk.X, expand=False) 
-        self.input_params_frame.columnconfigure(0, weight=0, minsize=200)  
-        self.input_params_frame.columnconfigure(1, weight=0, minsize=150)  
-        self.input_params_frame.columnconfigure(2, weight=1, minsize=100)  
+        self.input_params_frame.columnconfigure(0, weight=0, minsize=int(200 * self.scale_factor))  
+        self.input_params_frame.columnconfigure(1, weight=0, minsize=int(120 * self.scale_factor)) # War 150  
+        self.input_params_frame.columnconfigure(2, weight=1, minsize=int(100 * self.scale_factor))  
         
         self.param_row_widgets = []
-        self.param_row_min_height = 30 
+        self.param_row_min_height = int(30 * self.scale_factor) 
         for i in range(self.MAX_PARAM_ROWS):
             self.input_params_frame.rowconfigure(i, minsize=self.param_row_min_height)
-            lbl = ttk.Label(self.input_params_frame, text="")
+            lbl = ttk.Label(self.input_params_frame, text="") # Schrift wird durch Style gesetzt
             entry_var = tk.StringVar()
-            entry = ttk.Entry(self.input_params_frame, textvariable=entry_var, width=20) 
-            hint_lbl = ttk.Label(self.input_params_frame, text="", foreground="blue", font=("TkDefaultFont", 8))
+            entry = ttk.Entry(self.input_params_frame, textvariable=entry_var, width=20, font=('TkDefaultFont', self.scaled_font_size)) 
+            hint_lbl = ttk.Label(self.input_params_frame, text="", foreground="blue", font=("TkDefaultFont", self.scaled_hint_font_size))
             self.param_row_widgets.append({'label': lbl, 'entry_var': entry_var, 'entry': entry, 'hint': hint_lbl})
             
         self.param_entries = {} 
@@ -778,7 +809,7 @@ class PolynomialAppGUI:
         button_frame = ttk.Frame(controls_outer_frame) 
         button_frame.pack(pady=10)
 
-        self.generate_button = ttk.Button(button_frame, text="Polynom generieren und analysieren", command=self.generate_and_display) # self.generate_button
+        self.generate_button = ttk.Button(button_frame, text="Polynom generieren und analysieren", command=self.generate_and_display) 
         self.generate_button.pack(side=tk.LEFT, padx=5)
         
         self.flip_extrema_button = ttk.Button(button_frame, text="Extrema-Typ umkehren (K)", command=self.flip_extrema_type)
@@ -801,7 +832,7 @@ class PolynomialAppGUI:
         row_idx = 0
         for key, text in output_labels_texts.items():
             ttk.Label(output_frame, text=text).grid(row=row_idx, column=0, sticky=tk.NW, padx=5, pady=2)
-            text_widget = tk.Text(output_frame, height=1, width=45, wrap=tk.WORD, relief=tk.SUNKEN, borderwidth=1, font=("Consolas", 10)) 
+            text_widget = tk.Text(output_frame, height=1, width=45, wrap=tk.WORD, relief=tk.SUNKEN, borderwidth=1, font=("Consolas", self.scaled_consolas_font_size)) 
             if key in ["P(x)", "P'(x)", "P''(x)"]: text_widget.config(height=2)
             text_widget.grid(row=row_idx, column=1, sticky=tk.EW, padx=5, pady=2)
             text_widget.config(state=tk.DISABLED) 
@@ -813,12 +844,12 @@ class PolynomialAppGUI:
 
         # Statusleiste HINZUGEFÜGT
         self.status_label_var = tk.StringVar()
-        status_bar = ttk.Label(controls_outer_frame, textvariable=self.status_label_var, relief=tk.SUNKEN, anchor=tk.W, padding=2)
+        status_bar = ttk.Label(controls_outer_frame, textvariable=self.status_label_var, relief=tk.SUNKEN, anchor=tk.W, padding=2, font=('TkDefaultFont', self.scaled_status_font_size))
         status_bar.pack(side=tk.BOTTOM, fill=tk.X)
         self.update_status("Bereit.")
 
 
-        self.fig = Figure(figsize=(6, 4.5), dpi=100) 
+        self.fig = Figure(figsize=(6, 4.5), dpi=100) # DPI könnte auch skaliert werden: dpi=100 * self.scale_factor
         self.plot_ax = self.fig.add_subplot(111)
         self.plot_ax.set_xlabel("x")
         self.plot_ax.set_ylabel("P(x)") 
@@ -837,8 +868,10 @@ class PolynomialAppGUI:
         self.canvas.draw() 
         self.update_ui_for_poly_type() 
 
-    def update_status(self, message):
+    def update_status(self, message, duration=5000):
         self.status_label_var.set(message)
+        if duration > 0:
+            self.master.after(duration, lambda: self.status_label_var.set(""))
 
     def on_modifier_toggle(self):
         self._apply_param_hints()
@@ -1315,6 +1348,7 @@ class PolynomialAppGUI:
                 self.display_poly_info(self.analyzed_poly) 
                 self.export_discussion_button.config(state=tk.NORMAL) 
                 self.update_status("Polynom generiert und analysiert.")
+                if self.generate_button: self.generate_button.focus_set() # Fokus setzen
             else: 
                 if not called_from_lucky_button: messagebox.showerror("Fehler", "Polynom konnte nicht generiert werden (nach Verschiebung).")
                 else: raise ValueError("Polynom konnte nicht generiert werden nach Verschiebung (Lucky Button).")
@@ -1510,7 +1544,7 @@ class PolynomialAppGUI:
 
         features = PolynomialFeatures(self.analyzed_poly)
         discussion_text = features.get_full_discussion()
-        ExportDialog(self.master, "Kurvendiskussion Export", discussion_text)
+        ExportDialog(self.master, "Kurvendiskussion Export", discussion_text, scale_factor=self.scale_factor)
         self.update_status("Kurvendiskussion exportiert.")
         
     def _generate_random_value(self, is_integer_only=False, non_zero=False, 
@@ -1596,7 +1630,7 @@ class PolynomialAppGUI:
                         if param_name in ["x0", "q1", "q2", "q1_val", "q2_val", "xw", "r2", "r3"]: is_int_only = True 
                         elif param_name in ["D0", "C0", "y_at_q1_onetarget", "y1_val", "y2_val"]:
                             is_int_only = self.aim_int_y_var.get(); current_min, current_max = y_coord_range
-                        elif param_name in ["K_user", "a_coeff", "scale_factor_S", "K_user_onetarget","a_cubic_coeff"]: # a_cubic_coeff hinzugefügt
+                        elif param_name in ["K_user", "a_coeff", "scale_factor_S", "K_user_onetarget","a_cubic_coeff"]: 
                             non_zero_needed = True; current_min, current_max = scale_val_range
                             if param_name == "K_user" and self.force_int_coeffs_var.get(): 
                                 random_val_str = str(random.choice([-18,-12,-6,6,12,18]))
@@ -1606,8 +1640,8 @@ class PolynomialAppGUI:
                             else: non_zero_needed = True; current_min, current_max = scale_val_range
                             entry_var_tk.set(random_val_str); continue
                         elif param_name == "delta_q": is_int_only = True; non_zero_needed = True; current_min, current_max = delta_range
-                        elif param_name in ["C1_coeff", "b_cubic_coeff", "c_cubic_coeff", "d_cubic_coeff"]: # b,c,d für kubisch hinzugefügt
-                             current_min, current_max = scale_val_range # Können auch 0 sein
+                        elif param_name in ["C1_coeff", "b_cubic_coeff", "c_cubic_coeff", "d_cubic_coeff"]: 
+                             current_min, current_max = scale_val_range 
                     elif poly_type == "Quadratisch":
                         if param_name in ["h_vertex"]: is_int_only = True
                         elif param_name in ["k_vertex"]: is_int_only = self.aim_int_y_var.get(); current_min, current_max = y_coord_range
@@ -1709,86 +1743,76 @@ class PolynomialAppGUI:
 
     def parse_term(self, term_str_in):
         term_str = term_str_in.strip()
-        
-        if not term_str:
-            return Fraction(0), 0 # Leerer Term
+        if not term_str: return Fraction(0), 0
 
-        # Vorzeichen extrahieren
         sign = 1
-        if term_str.startswith('+'):
-            term_str = term_str[1:].strip()
+        if term_str.startswith('+'): term_str = term_str[1:].strip()
         elif term_str.startswith('-'):
             sign = -1
             term_str = term_str[1:].strip()
-
-        if not term_str: # Nur ein Vorzeichen
-             raise ValueError("Isolierter Vorzeichen-Term")
-
-
-        coeff_str = ""
-        power_val = 0
         
-        if 'x' in term_str:
-            parts = term_str.split('x', 1)
-            coeff_part = parts[0].strip()
-            
-            if not coeff_part: # x, -x, +x
-                coeff_val = Fraction(sign)
-            else:
-                try:
-                    coeff_val = Fraction(coeff_part) * sign
-                except ValueError:
-                    raise ValueError(f"Ungültiger Koeffizient: '{coeff_part}'")
+        if not term_str: raise ValueError("Isolierter Vorzeichen-Term")
 
-            if '^' in parts[1]:
-                power_part_str = parts[1].split('^', 1)[1].strip()
-                try:
-                    power_val = int(power_part_str)
-                    if power_val < 0 or power_val > 4 : raise ValueError() # Max Grad 4
-                except ValueError:
-                    raise ValueError(f"Ungültige Potenz: '^{power_part_str}'")
-            elif parts[1].strip() == "": # Term endet mit x
-                power_val = 1
-            else: # Etwas nach x aber kein ^, z.B. "2xy"
-                raise ValueError(f"Unerwartete Zeichen nach 'x': '{parts[1]}'")
-        else: # Konstanter Term
+        # Regex to capture coefficient, x, and exponent
+        # Allows for forms like: 5x^3, x^3, -x^3, 5x, x, 5, 1/2x^2, -3/4x
+        match = re.fullmatch(r"([0-9./]*)(x(?:\^([0-4]))?)?", term_str, re.IGNORECASE)
+        
+        if not match:
+            raise ValueError(f"Ungültiger Term-Format: '{term_str_in}'")
+
+        coeff_str = match.group(1)
+        x_part = match.group(2)
+        power_str = match.group(3)
+
+        coeff_val = Fraction(1) # Standard für 'x' oder 'x^n'
+        if coeff_str: # Wenn ein Koeffizient explizit da ist
             try:
-                coeff_val = Fraction(term_str) * sign
-                power_val = 0
+                coeff_val = Fraction(coeff_str)
             except ValueError:
-                raise ValueError(f"Ungültiger konstanter Term: '{term_str}'")
-                
+                raise ValueError(f"Ungültiger Koeffizient im Term '{term_str_in}'")
+        
+        coeff_val *= sign
+
+        power_val = 0
+        if x_part: # Wenn 'x' im Term vorkommt
+            if power_str: # Wenn eine Potenz da ist (z.B. x^3)
+                power_val = int(power_str)
+            else: # Nur 'x'
+                power_val = 1
+        
         return coeff_val, power_val
+
 
     def parse_polynomial_string(self, poly_string_raw):
         coeffs = {'e': Fraction(0), 'a': Fraction(0), 'b': Fraction(0), 'c': Fraction(0), 'd': Fraction(0)}
         
-        if not poly_string_raw.strip(): # Leere Eingabe
-            return coeffs # Alle Koeffizienten bleiben 0
+        if not poly_string_raw.strip(): 
+            return coeffs 
 
-        # Ersetze Leerzeichen um Operatoren herum, aber nicht innerhalb von Brüchen
-        poly_string = poly_string_raw.replace(" ", "") 
-        poly_string = poly_string.replace("-", "+-") 
-        
+        # Normalisiere Leerzeichen um Operatoren
+        poly_string = poly_string_raw.replace(" ", "")
+        # Füge explizite Pluszeichen vor negativen Termen ein, die nicht am Anfang stehen
+        poly_string = re.sub(r"(?<!\^)-", "+-", poly_string) 
+
         if poly_string.startswith("+-"): 
-            poly_string = poly_string[1:]
-        elif poly_string.startswith("+"): # Falls der User "+2x" etc. eingibt
+            poly_string = poly_string[1:] # Entferne führendes "+-" -> "-"
+        elif poly_string.startswith("+"): 
             poly_string = poly_string[1:]
 
-        if not poly_string: # Wenn nach Normalisierung leer (z.B. nur "-")
+        if not poly_string: 
             return coeffs
 
         terms = [term for term in poly_string.split('+') if term] 
 
         for term_str in terms:
             try:
-                coeff, power = self.parse_term(term_str) # parse_term ist jetzt eine Methode der Klasse
+                coeff, power = self.parse_term(term_str) 
                 if power == 4: coeffs['e'] += coeff
                 elif power == 3: coeffs['a'] += coeff
                 elif power == 2: coeffs['b'] += coeff
                 elif power == 1: coeffs['c'] += coeff
                 elif power == 0: coeffs['d'] += coeff
-                else: # Sollte durch parse_term abgefangen werden
+                else: 
                     raise ValueError(f"Potenz {power} wird nicht unterstützt im Term '{term_str}'.")
             except ValueError as e:
                 raise ValueError(f"Fehler beim Parsen des Terms '{term_str}': {e}")
@@ -1803,33 +1827,32 @@ class PolynomialAppGUI:
         try:
             coeffs = self.parse_polynomial_string(poly_string)
 
-            # Polynomtyp bestimmen
             determined_type = None
             target_construction_method = None
             params_to_set = {}
 
-            if coeffs['e'] != 0: # Potenz 4 vorhanden
-                if coeffs['a'] == 0 and coeffs['c'] == 0: # Biquadratisch
+            if coeffs['e'] != 0: 
+                if coeffs['a'] == 0 and coeffs['c'] == 0: 
                     determined_type = "Biquadratisch"
                     target_construction_method = "direct_coeffs_biquad"
                     params_to_set = {"A_biquad": coeffs['e'], "B_biquad": coeffs['b'], "D_biquad": coeffs['d']}
                 else:
                     messagebox.showerror("Fehler", "Allgemeine Polynome 4. Grades werden nicht direkt unterstützt. Bitte als biquadratisches Polynom (nur x^4, x^2, Konstante) oder Polynom niedrigeren Grades eingeben.")
                     return
-            elif coeffs['a'] != 0: # Höchste Potenz ist 3
+            elif coeffs['a'] != 0: 
                 determined_type = "Kubisch"
                 target_construction_method = "direct_coeffs_cubic"
                 params_to_set = {"a_cubic_coeff": coeffs['a'], "b_cubic_coeff": coeffs['b'], "c_cubic_coeff": coeffs['c'], "d_cubic_coeff": coeffs['d']}
-            elif coeffs['b'] != 0: # Höchste Potenz ist 2
+            elif coeffs['b'] != 0: 
                 determined_type = "Quadratisch"
                 target_construction_method = "direct_coeffs_quad"
                 params_to_set = {"b_quad": coeffs['b'], "c_quad": coeffs['c'], "d_quad": coeffs['d']}
-            elif coeffs['c'] != 0 or coeffs['d'] != 0 : # Höchste Potenz ist 1 oder 0 (und nicht alles 0)
+            elif coeffs['c'] != 0 or coeffs['d'] != 0 : 
                 determined_type = "Linear"
                 target_construction_method = "direct_coeffs_lin"
                 params_to_set = {"c_lin": coeffs['c'], "d_lin": coeffs['d']}
-            else: # Nullpolynom
-                determined_type = "Linear" # Behandle als lineare Funktion P(x)=0
+            else: 
+                determined_type = "Linear" 
                 target_construction_method = "direct_coeffs_lin"
                 params_to_set = {"c_lin": 0, "d_lin": 0}
                 messagebox.showinfo("Info", "Das eingegebene Polynom ist das Nullpolynom P(x) = 0.")
@@ -1837,9 +1860,8 @@ class PolynomialAppGUI:
 
             if determined_type:
                 self.poly_type_var.set(determined_type)
-                self.update_ui_for_poly_type() # Aktualisiert die Konstruktionsmethoden-Liste
+                self.update_ui_for_poly_type() 
 
-                # Finde den exakten Schlüssel für die "Aus Koeffizienten"-Methode
                 actual_method_key = None
                 current_options = {}
                 if determined_type == "Kubisch": current_options = self.cubic_construction_options
@@ -1854,21 +1876,19 @@ class PolynomialAppGUI:
                 
                 if actual_method_key:
                     self.construction_method_var.set(actual_method_key)
-                    self._update_construction_params_display() # Zeigt die korrekten Parameterfelder an
+                    self._update_construction_params_display() 
 
-                    # Parameterfelder füllen
                     for param_key, value_to_set in params_to_set.items():
                         if param_key in self.param_entries:
                             self.param_entries[param_key].set(str(value_to_set))
                         else:
                             print(f"Warnung: Parameter-Schlüssel '{param_key}' nicht in self.param_entries gefunden beim Parsen.")
                     
-                    # X-Shift auf 0 setzen für geparste Polynome
                     if hasattr(self, 'x_shift_specific_param_name') and self.x_shift_specific_param_name in self.param_entries:
                          self.param_entries[self.x_shift_specific_param_name].set("0")
                     
-                    self.generate_and_display(use_specific_x_shift=False, parsed_coeffs=coeffs) # Direkt mit geparsten Koeffizienten generieren
-                    if self.generate_button: self.generate_button.focus_set() # Fokus setzen
+                    self.generate_and_display(use_specific_x_shift=False, parsed_coeffs=coeffs) 
+                    if self.generate_button: self.generate_button.focus_set() 
                     self.update_status(f"Polynom '{poly_string}' übernommen und analysiert.")
 
                 else:
@@ -1888,9 +1908,10 @@ class PolynomialAppGUI:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Polynomfunktionen Generator")
     parser.add_argument("--width", type=int, default=1440, help="Startbreite des Fensters")
-    parser.add_argument("--height", type=int, default=970, help="Starthöhe des Fensters") # Höhe leicht erhöht
+    parser.add_argument("--height", type=int, default=970, help="Starthöhe des Fensters") 
+    parser.add_argument("--scale", type=float, default=1.0, help="Skalierungsfaktor für GUI-Elemente (z.B. 0.8 für 80%)")
     args = parser.parse_args()
 
     root = tk.Tk()
-    app = PolynomialAppGUI(root, initial_width=args.width, initial_height=args.height)
+    app = PolynomialAppGUI(root, initial_width=args.width, initial_height=args.height, scale_factor=args.scale)
     root.mainloop()
