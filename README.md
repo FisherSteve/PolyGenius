@@ -80,7 +80,7 @@ Mit Optionen wie dem **Erzwingen ganzzahliger Koeffizienten**, dem **"Ich fühle
     
     Optional kannst du die Startfenstergröße übergeben:
     ```bash
-    python dein_programm_name.py --width 1600 --height 1000
+    python dein_programm_name.py --width 1600 --height 1000 --scale 0.6
     ```
 
 ---
